@@ -2,6 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 const { GitRevisionPlugin } = require('git-revision-webpack-plugin');
 const gitRevisionPlugin = new GitRevisionPlugin();
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+
 
 module.exports = {
     mode: 'production',
@@ -89,11 +91,14 @@ module.exports = {
             },
         ],
     },
-
+    optimization: {
+        concatenateModules: false,
+    },
     plugins: [
         new webpack.DefinePlugin({
             DPLAYER_VERSION: `"${require('../package.json').version}"`,
             GIT_HASH: JSON.stringify(gitRevisionPlugin.version()),
         }),
+        new BundleAnalyzerPlugin()
     ],
 };

@@ -5,17 +5,8 @@ import volumeDown from '../assets/volume-down.svg';
 import volumeOff from '../assets/volume-off.svg';
 import full from '../assets/full.svg';
 import fullWeb from '../assets/full-web.svg';
-import setting from '../assets/setting.svg';
 import right from '../assets/right.svg';
-import comment from '../assets/comment.svg';
-import commentOff from '../assets/comment-off.svg';
-import send from '../assets/send.svg';
-import pallette from '../assets/pallette.svg';
-import camera from '../assets/camera.svg';
-import airplay from '../assets/airplay.svg';
-import subtitle from '../assets/subtitle.svg';
 import loading from '../assets/loading.svg';
-import chromecast from '../assets/chromecast.svg';
 
 const Icons = {
     play: play,
@@ -25,17 +16,8 @@ const Icons = {
     volumeOff: volumeOff,
     full: full,
     fullWeb: fullWeb,
-    setting: setting,
     right: right,
-    comment: comment,
-    commentOff: commentOff,
-    send: send,
-    pallette: pallette,
-    camera: camera,
-    subtitle: subtitle,
     loading: loading,
-    airplay: airplay,
-    chromecast: chromecast,
 };
 
 export default Icons;

@@ -61,12 +61,12 @@
         "template-string-optimize-loader": "^3.0.0",
         "url-loader": "^4.1.0",
         "webpack": "^5.88.2",
+        "webpack-bundle-analyzer": "^4.10.1",
         "webpack-cli": "5.1.4",
         "webpack-dev-server": "^4.15.1",
         "yorkie": "^2.0.0"
     },
     "dependencies": {
-        "axios": "1.4.0",
         "balloon-css": "^1.0.3"
     }
 }

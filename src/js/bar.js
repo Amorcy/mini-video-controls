@@ -4,7 +4,7 @@ class Bar {
         this.elements.volume = template.volumeBar;
         this.elements.played = template.playedBar;
         this.elements.loaded = template.loadedBar;
-        this.elements.danmaku = template.danmakuOpacityBar;
+        // this.elements.danmaku = template.danmakuOpacityBar;
     }
 
     /**

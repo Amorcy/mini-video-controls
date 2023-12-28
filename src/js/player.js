@@ -12,7 +12,6 @@ import Bar from './bar';
 import Timer from './timer';
 import Controller from './controller';
 import Setting from './setting';
-import tplVideo from '../template/video.art';
 
 let index = 0;
 const instances = [];
@@ -27,10 +26,6 @@ class DPlayer {
     constructor(options) {
         this.options = handleOption({ preload: options.video.type === 'webtorrent' ? 'none' : 'metadata', ...options });
 
-        if (this.options.video.quality) {
-            this.qualityIndex = this.options.video.defaultQuality;
-            this.quality = this.options.video.quality[this.options.video.defaultQuality];
-        }
         this.tran = new i18n(this.options.lang).tran;
         this.events = new Events();
         this.user = new User(this);
@@ -39,53 +34,11 @@ class DPlayer {
 
         this.container.classList.add('dplayer');
 
-        if (this.options.live) {
-            this.container.classList.add('dplayer-live');
-        } else {
-            this.container.classList.remove('dplayer-live');
-        }
-
         this.arrow = this.container.offsetWidth <= 500;
         if (this.arrow) {
             this.container.classList.add('dplayer-arrow');
         }
 
-        // multi subtitles defaultSubtitle add index, off option
-        if (this.options.subtitle) {
-            if (Array.isArray(this.options.subtitle.url)) {
-                const offSubtitle = {
-                    subtitle: '',
-                    lang: 'off',
-                };
-                this.options.subtitle.url.push(offSubtitle);
-                if (this.options.subtitle.defaultSubtitle) {
-                    if (typeof this.options.subtitle.defaultSubtitle === 'string') {
-                        // defaultSubtitle is string, match in lang then name.
-                        this.options.subtitle.index = this.options.subtitle.url.findIndex((sub) =>
-                            /* if (sub.lang === this.options.subtitle.defaultSubtitle) {
-                            return true;
-                        } else if (sub.name === this.options.subtitle.defaultSubtitle) {
-                            return true;
-                        } else {
-                            return false;
-                        } */
-                            sub.lang === this.options.subtitle.defaultSubtitle ? true : sub.name === this.options.subtitle.defaultSubtitle ? true : false
-                        );
-                    } else if (typeof this.options.subtitle.defaultSubtitle === 'number') {
-                        // defaultSubtitle is int, directly use for index
-                        this.options.subtitle.index = this.options.subtitle.defaultSubtitle;
-                    }
-                }
-                // defaultSubtitle not match or not exist or index bound(when defaultSubtitle is int), try browser language.
-                if (this.options.subtitle.index === -1 || !this.options.subtitle.index || this.options.subtitle.index > this.options.subtitle.url.length - 1) {
-                    this.options.subtitle.index = this.options.subtitle.url.findIndex((sub) => sub.lang === this.options.lang);
-                }
-                // browser language not match, default off title
-                if (this.options.subtitle.index === -1) {
-                    this.options.subtitle.index = this.options.subtitle.url.length - 1;
-                }
-            }
-        }
 
         this.template = new Template({
             container: this.container,
@@ -117,7 +70,7 @@ class DPlayer {
 
         this.timer = new Timer(this);
 
-        this.initVideo(this.video, (this.quality && this.quality.type) || this.options.video.type);
+        this.initVideo(this.video, this.options.video.type);
 
         if (!this.danmaku && this.options.autoplay) {
             this.play();
@@ -261,13 +214,13 @@ class DPlayer {
      * @param {Object} video - new video info
      * @param {Object} danmaku - new danmaku info
      */
-    switchVideo(video, danmakuAPI) {
+    switchVideo(video) {
         this.pause();
         this.video.poster = video.pic ? video.pic : '';
         this.video.src = video.url;
     }
 
-    initVideo(video, type) {
+    initVideo(video) {
         // this.initMSE(video, type);
 
         /**
@@ -337,90 +290,8 @@ class DPlayer {
 
         this.volume(this.user.get('volume'), true, true);
 
-        if (this.options.subtitle) {
-            // init old single subtitle function(sub show and style)
-            this.subtitle = new Subtitle(this.template.subtitle, this.video, this.options.subtitle, this.events);
-            // init multi subtitles function(sub update)
-            if (Array.isArray(this.options.subtitle.url)) {
-                this.subtitles = new Subtitles(this);
-            }
-            if (!this.user.get('subtitle')) {
-                this.subtitle.hide();
-            }
-        }
     }
 
-    switchQuality(index) {
-        index = typeof index === 'string' ? parseInt(index) : index;
-        if (this.qualityIndex === index || this.switchingQuality) {
-            return;
-        } else {
-            this.prevIndex = this.qualityIndex;
-            this.qualityIndex = index;
-        }
-        this.switchingQuality = true;
-        this.quality = this.options.video.quality[index];
-        this.template.qualityButton.innerHTML = this.quality.name;
-
-        const paused = this.video.paused;
-        this.video.pause();
-        const videoHTML = tplVideo({
-            current: false,
-            pic: null,
-            screenshot: this.options.screenshot,
-            preload: 'auto',
-            url: this.quality.url,
-            subtitle: this.options.subtitle,
-        });
-        const videoEle = new DOMParser().parseFromString(videoHTML, 'text/html').body.firstChild;
-        this.template.videoWrap.insertBefore(videoEle, this.template.videoWrap.getElementsByTagName('div')[0]);
-        this.prevVideo = this.video;
-        this.video = videoEle;
-        this.initVideo(this.video, this.quality.type || this.options.video.type);
-        this.seek(this.prevVideo.currentTime);
-        this.notice(`${this.tran('switching-quality').replace('%q', this.quality.name)}`, -1, undefined, 'switch-quality');
-        this.events.trigger('quality_start', this.quality);
-
-        this.on('canplay', () => {
-            if (this.prevVideo) {
-                if (this.video.currentTime !== this.prevVideo.currentTime) {
-                    this.seek(this.prevVideo.currentTime);
-                    return;
-                }
-                this.template.videoWrap.removeChild(this.prevVideo);
-                this.video.classList.add('dplayer-video-current');
-                if (!paused) {
-                    this.video.play();
-                }
-                this.prevVideo = null;
-                this.notice(`${this.tran('switched-quality').replace('%q', this.quality.name)}`, undefined, undefined, 'switch-quality');
-                this.switchingQuality = false;
-
-                this.events.trigger('quality_end');
-            }
-        });
-
-        this.on('error', () => {
-            if (!this.video.error) {
-                return;
-            }
-            if (this.prevVideo) {
-                this.template.videoWrap.removeChild(this.video);
-                this.video = this.prevVideo;
-                if (!paused) {
-                    this.video.play();
-                }
-                this.qualityIndex = this.prevIndex;
-                this.quality = this.options.video.quality[this.qualityIndex];
-                this.noticeTime = setTimeout(() => {
-                    this.template.notice.style.opacity = 0;
-                    this.events.trigger('notice_hide');
-                }, 3000);
-                this.prevVideo = null;
-                this.switchingQuality = false;
-            }
-        });
-    }
 
     notice(text, time = 2000, opacity = 0.8, id) {
         let oldNoticeEle;
